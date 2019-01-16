@@ -1,17 +1,22 @@
+console.log("on Page entry");
 var conf = {iceServers: [{urls: []}]};
 var pc = new RTCPeerConnection(conf);
 var localStream, _fileChannel, chatEnabled,context,source,
-	_chatChannel,sendFileDom = {}, 
+	_chatChannel,sendFileDom = {},
 	recFileDom={},receiveBuffer=[],
 	receivedSize=0,
 	file,
-	bytesPrev=0; 
+	bytesPrev=0;
 function errHandler(err){
 	console.log(err);
 }
 function enableChat(){
+	console.log("DEBUG : ENABLE_CHAT");
+	console.log(enable_chat);
 	enable_chat.checked? (chatEnabled=true) : (chatEnabled=false);
 }
+
+console.log("call enableChat()");
 enableChat();
 
 navigator.mediaDevices.getUserMedia({audio:true,video:true}).then(stream=>{
@@ -71,10 +76,10 @@ remoteOfferGot.onclick = function(){
 		        pc.createAnswer().then(function(description){
 		        	console.log('createAnswer 200 ok \n',description);
 				    pc.setLocalDescription(description).then(function() {
-				    }).catch(errHandler);	            	
-		        }).catch(errHandler);				
+				    }).catch(errHandler);
+		        }).catch(errHandler);
 			}
-	}).catch(errHandler);	
+	}).catch(errHandler);
 }
 localOfferSet.onclick = function(){
 	if(chatEnabled){
@@ -110,7 +115,7 @@ fileTransfer.onchange = function(e){
 		sendFileDom.size=file.size;
 		sendFileDom.type=file.type;
 		sendFileDom.fileInfo="areYouReady";
-		console.log(sendFileDom);	
+		console.log(sendFileDom);
 	}else{
 		console.log('No file selected');
 	}
@@ -143,7 +148,7 @@ function fileChannel(e){
 				// rest
 				receiveBuffer = [];
 				receivedSize = 0;
-				// clearInterval(window.timer);	
+				// clearInterval(window.timer);
 			}
 		}else if(type == "[object String]"){
 			data = JSON.parse(e.data);
@@ -163,13 +168,13 @@ function fileChannel(e){
 				_fileChannel.send(sendData);
 				// window.timer = setInterval(function(){
 				// 	Stats();
-				// },1000)				
+				// },1000)
 			}else if(data.fileInfo == "readyToReceive"){
 				sendFileProg.max = sendFileDom.size;
 				sendFileinChannel(); // Start sending the file
 			}
 			console.log('_fileChannel: ',data.fileInfo);
-		}	
+		}
 	}
 	_fileChannel.onclose = function(){
 		console.log('file channel closed');
@@ -236,29 +241,29 @@ streamAudioFile.onchange = function(){
             source = context.createBufferSource();
             source.buffer = buffer;
             source.start(0);
- 
+
             // connect the audio stream to the audio hardware
             source.connect(context.destination);
- 
+
             // create a destination for the remote browser
             var remote = context.createMediaStreamDestination();
- 
+
             // connect the remote destination to the source
             source.connect(remote);
- 
+
 			 			local.srcObject = remote.stream
 						local.muted=true;
             // add the stream to the peer connection
             pc.addStream(remote.stream);
- 
+
             // create a SDP offer for the new stream
             // pc.createOffer(setLocalAndSendMessage);
           });
         });
- 
+
       reader.readAsArrayBuffer(file);
     }
-  }	
+  }
 }
 
 var audioRTC = function (cb){
@@ -274,21 +279,21 @@ var audioRTC = function (cb){
             var source = context.createBufferSource();
             source.buffer = buffer;
             source.start(0);
-  
+
             // connect the audio stream to the audio hardware
             source.connect(context.destination);
- 
+
             // create a destination for the remote browser
             var remote = context.createMediaStreamDestination();
- 
+
             // connect the remote destination to the source
             source.connect(remote);
             window.localStream = remote.stream;
             cb({'status':'success','stream':true});
           });
         });
- 
+
       reader.readAsArrayBuffer(file);
     }
-  } 
+  }
 }

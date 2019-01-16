@@ -1,0 +1,22 @@
+{
+  "name": "serverless-webrtc",
+  "version": "1.0.0",
+  "description": "--- * Is it possible to create a p2p connection without a signalling server?  Yes! * How?? copy paste the SDPs between local and remote that's it! * Are you kidding?? Nope, Please open `webrtc-noserver.html` in a localhost and go through the steps.  * This Serverless webRTC concept is only for learning javascript webRTC APIs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/svarunan/serverless-webrtc.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/svarunan/serverless-webrtc/issues"
+  },
+  "homepage": "https://github.com/svarunan/serverless-webrtc#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
