@@ -1,31 +1,52 @@
 console.log("on Page entry");
-var conf = {iceServers: [{urls: []}]};
-var pc = new RTCPeerConnection(conf);
-var localStream, _fileChannel, chatEnabled,context,source,
-	_chatChannel,sendFileDom = {},
-	recFileDom={},receiveBuffer=[],
-	receivedSize=0,
-	file,
-	bytesPrev=0;
+const conf = {
+	iceServers: [
+		{ urls: [] },
+	],
+};
+const pc = new RTCPeerConnection(conf);
+let localStream = null;
+let _fileChannel = null;
+let chatEnabled = null;
+let context = null;
+let source = null;
+let _chatChannel = null;
+let sendFileDom = {};
+let recFileDom = {};
+let receiveBuffer = [];
+let receivedSize = 0;
+let file = null;
+let bytesPrev = 0;
+
 function errHandler(err){
 	console.log(err);
 }
 function enableChat(){
-	console.log("DEBUG : ENABLE_CHAT");
-	console.log(enable_chat);
-	enable_chat.checked? (chatEnabled=true) : (chatEnabled=false);
+	// NOTE: enable_chat is input element
+	if (enable_chat.checked) {
+		chatEnabled = true;
+		return null;
+	}
+	chatEnabled = false;
+	return null;
 }
 
-console.log("call enableChat()");
 enableChat();
 
-navigator.mediaDevices.getUserMedia({audio:true,video:true}).then(stream=>{
-	localStream = stream;
-	micused.innerHTML = localStream.getAudioTracks()[0].label;
-	pc.addStream(stream);
-	local.src = URL.createObjectURL(stream);
-	local.muted=true;
-}).catch(errHandler);
+navigator
+	.mediaDevices
+	.getUserMedia({ audio: true, video: true })
+	.then(stream => {
+		localStream = stream;
+		// NOTE: 어떤 마이크 스트림을 사용하고 있는지 화면에 노출
+		micused.innerHTML = localStream.getAudioTracks()[0].label;
+		// NOTE: RTCConnection 객체에 로컬 비디오 스트림을 추가
+		pc.addStream(stream);
+		// NOTE: 로컬 Video Element에 local media stream 노출
+		local.srcObject = stream;
+		local.muted = true;
+	})
+	.catch(errHandler);
 
 function sendMsg(){
 	var text = sendTxt.value;
@@ -34,14 +55,15 @@ function sendMsg(){
 	sendTxt.value="";
 	return false;
 }
+
 pc.ondatachannel = function(e){
 	if(e.channel.label == "fileChannel"){
-		console.log('fileChannel Received -',e);
+		console.log('fileChannel Received -', e);
 		_fileChannel = e.channel;
 		fileChannel(e.channel);
 	}
 	if(e.channel.label == "chatChannel"){
-		console.log('chatChannel Received -',e);
+		console.log('chatChannel Received -', e);
 		_chatChannel = e.channel;
 		chatChannel(e.channel);
 	}
@@ -56,31 +78,41 @@ pc.onicecandidate = function(e){
 		console.log(cand.candidate);
 	}
 }
+
 pc.oniceconnectionstatechange = function(){
-	console.log('iceconnectionstatechange: ',pc.iceConnectionState);
-}
+	console.log('iceconnectionstatechange: ', pc.iceConnectionState);
+};
+
 pc.onaddstream = function(e){
-	console.log('remote onaddstream',e.stream);
-	remote.src = URL.createObjectURL(e.stream);
-}
+	console.log('remote onaddstream', e.stream);
+	remote.srcObject = e.stream;
+};
+
 pc.onconnection = function(e){
-	console.log('onconnection ',e);
-}
+	console.log('onconnection ', e);
+};
 
 remoteOfferGot.onclick = function(){
 	var _remoteOffer = new RTCSessionDescription(JSON.parse(remoteOffer.value));
 	console.log('remoteOffer \n',_remoteOffer);
-	pc.setRemoteDescription(_remoteOffer).then(function() {
+	pc.setRemoteDescription(_remoteOffer)
+		.then(function() {
 			console.log('setRemoteDescription ok');
 			if(_remoteOffer.type == "offer"){
-		        pc.createAnswer().then(function(description){
-		        	console.log('createAnswer 200 ok \n',description);
-				    pc.setLocalDescription(description).then(function() {
-				    }).catch(errHandler);
-		        }).catch(errHandler);
+				pc.createAnswer()
+					.then(function(description){
+						console.log('createAnswer 200 ok \n',description);
+						pc
+							.setLocalDescription(description)
+							.then(function() {
+								console.log("DEBUG : LOCAL DESCRIPTION SETTING DONE");
+							})
+							.catch(errHandler);
+					}).catch(errHandler);
 			}
-	}).catch(errHandler);
-}
+		}).catch(errHandler);
+};
+
 localOfferSet.onclick = function(){
 	if(chatEnabled){
 		_chatChannel = pc.createDataChannel('chatChannel');
@@ -91,38 +123,39 @@ localOfferSet.onclick = function(){
 	}
 	pc.createOffer().then(des=>{
 		console.log('createOffer ok ');
-		pc.setLocalDescription(des).then( ()=>{
-			setTimeout(function(){
-				if(pc.iceGatheringState == "complete"){
-					return;
-				}else{
-					console.log('after GetherTimeout');
-					localOffer.value = JSON.stringify(pc.localDescription);
-				}
-			},2000);
+		pc.setLocalDescription(des)
+			.then( () => {
+				setTimeout(function(){
+					if (pc.iceGatheringState == "complete") {
+						return;
+					} else {
+						console.log('after GetherTimeout');
+						localOffer.value = JSON.stringify(pc.localDescription);
+					}
+				},2000);
 			console.log('setLocalDescription ok');
 		}).catch(errHandler);
 		// For chat
 	}).catch(errHandler);
-}
+};
 
 //File transfer
 fileTransfer.onchange = function(e){
-	var files = fileTransfer.files;
-	if(files.length > 0){
+	const files = fileTransfer.files;
+	if (files.length > 0){
 		file=files[0];
-		sendFileDom.name=file.name;
-		sendFileDom.size=file.size;
-		sendFileDom.type=file.type;
-		sendFileDom.fileInfo="areYouReady";
+		sendFileDom.name = file.name;
+		sendFileDom.size = file.size;
+		sendFileDom.type = file.type;
+		sendFileDom.fileInfo = "areYouReady";
 		console.log(sendFileDom);
-	}else{
+	} else {
 		console.log('No file selected');
 	}
 }
 function sendFile(){
-	if(!fileTransfer.value)return;
-	var fileInfo = JSON.stringify(sendFileDom);
+	if (!fileTransfer.value) return;
+	const fileInfo = JSON.stringify(sendFileDom);
 	_fileChannel.send(fileInfo);
 	console.log('file info sent');
 }
